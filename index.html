@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>기사 프로젝트 노트</title>
+<style>
+:root{--bg:#f2f5f8;--card:#fff;--ink:#1b2430;--sub:#5d6b7a;--line:#d3dae1;--accent:#1f5f8b;--accent-bg:#e4eef6}
+@media (prefers-color-scheme:dark){:root{--bg:#141a21;--card:#1c242d;--ink:#e8edf2;--sub:#9aa8b6;--line:#303b47;--accent:#7db6e0;--accent-bg:#22384a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.5rem;margin:8px 0 20px;letter-spacing:-.02em}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+h2{font-size:.95rem;margin:0 0 10px;color:var(--sub);font-weight:600}
+input[type=text]{width:100%;font:inherit;color:inherit;background:transparent;border:0;border-bottom:1px solid var(--line);padding:8px 2px;border-radius:0}
+input[type=text]:focus{outline:2px solid var(--accent);outline-offset:2px;border-bottom-color:transparent}
+.big{font-size:1.1rem;font-weight:600}
+.row{display:flex;gap:10px;align-items:center}
+.row+.row{margin-top:4px}
+.row input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:var(--accent)}
+.row input[type=checkbox]:checked+input{text-decoration:line-through;color:var(--sub)}
+.team{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.team label,.fl{display:block;font-size:.8rem;color:var(--sub)}
+.topic{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tag{background:var(--accent-bg);color:var(--accent);font-weight:700;padding:4px 14px;border-radius:999px}
+.angle{color:var(--sub)}
+.angle b{color:var(--ink);font-weight:600}
+.day{display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:center}
+.day+.day{margin-top:4px}
+.day time{font-weight:700;color:var(--accent)}
+button{font:inherit;font-weight:600;color:#fff;background:var(--accent);border:0;border-radius:8px;padding:12px 18px;min-height:44px;margin-top:14px;cursor:pointer}
+@media (prefers-color-scheme:dark){button{color:#10202c}}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (max-width:420px){.team{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>기사 프로젝트 노트</h1>
+
+<section>
+<h2>프로젝트 한 줄</h2>
+<input type="text" id="brief" class="big" value="[브리프 한 줄]" aria-label="프로젝트 한 줄">
+</section>
+
+<section>
+<h2>팀 이름과 역할</h2>
+<div class="team">
+<div><label for="team">팀 이름</label><input type="text" id="team" value="[팀 이름]"></div>
+<div><label for="role">내 역할</label><input type="text" id="role" placeholder="역할 입력"></div>
+</div>
+</section>
+
+<section>
+<h2>주제</h2>
+<div class="topic"><span class="tag">경제</span><span class="angle">내 앵글: <b>내일 정함</b></span></div>
+</section>
+
+<section>
+<h2>할 일 체크리스트</h2>
+<div id="todos"></div>
+</section>
+
+<section>
+<h2>날짜별 기록</h2>
+<div id="days"></div>
+<button type="button" id="add">다음 날짜 추가</button>
+</section>
+</main>
+
+<script>
+(function(){
+  var KEY="article-note-v1", state={};
+  try{state=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){state={}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+
+  ["brief","team","role"].forEach(function(id){
+    var el=document.getElementById(id);
+    if(state[id]!==undefined)el.value=state[id];
+    el.addEventListener("input",function(){state[id]=el.value;save()});
+  });
+
+  var todos=state.todos||[1,2,3,4,5].map(function(){return{t:"",d:false}});
+  var tw=document.getElementById("todos");
+  todos.forEach(function(it,i){
+    var r=document.createElement("div");r.className="row";
+    var c=document.createElement("input");c.type="checkbox";c.checked=it.d;c.setAttribute("aria-label","할 일 "+(i+1)+" 완료");
+    var t=document.createElement("input");t.type="text";t.value=it.t;t.placeholder="할 일 "+(i+1);
+    c.addEventListener("change",function(){it.d=c.checked;state.todos=todos;save()});
+    t.addEventListener("input",function(){it.t=t.value;state.todos=todos;save()});
+    r.appendChild(c);r.appendChild(t);tw.appendChild(r);
+  });
+
+  var days=state.days||[{d:"11/18",t:""}];
+  var dw=document.getElementById("days");
+  function addRow(it){
+    var r=document.createElement("div");r.className="day";
+    var tm=document.createElement("time");tm.textContent=it.d;
+    var t=document.createElement("input");t.type="text";t.value=it.t;
+    t.placeholder=it.d==="11/18"?"오늘 한 줄":"한 줄 기록";
+    t.setAttribute("aria-label",it.d+" 기록");
+    t.addEventListener("input",function(){it.t=t.value;state.days=days;save()});
+    r.appendChild(tm);r.appendChild(t);dw.appendChild(r);
+  }
+  days.forEach(addRow);
+
+  document.getElementById("add").addEventListener("click",function(){
+    var p=days[days.length-1].d.split("/").map(Number);
+    var dt=new Date(2026,p[0]-1,p[1]+1);
+    var it={d:(dt.getMonth()+1)+"/"+dt.getDate(),t:""};
+    days.push(it);state.days=days;save();addRow(it);
+  });
+})();
+</script>
+</body>
+</html>
